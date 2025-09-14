@@ -1,8 +1,10 @@
 import * as y from "yjs";
 import { WebrtcProvider } from "y-webrtc";
 
-const yDOC = new y.Doc();
+export function setupYjs(roomName = "drawing-room") {
+  const ydoc = new y.Doc();
+  const provider = new WebrtcProvider(roomName, ydoc);
+  const strokes = ydoc.getArray("strokes");
 
-export const yText = yDOC.getText("shared");
-
-export const provider = new WebrtcProvider("my-room", yDOC);
+  return { ydoc, provider, strokes };
+}
