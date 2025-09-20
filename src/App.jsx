@@ -1,10 +1,8 @@
 import "./App.css";
 import AiCanvasBoard from "./canvas/AiCanvasBoard";
-import { setupYjs } from "./yjssetup";
+import { strokes } from "./yjssetup";
 
 function App() {
-  const { strokes } = setupYjs("drawing-room");
-
   return (
     <div className="flex justify-center items-center h-screen">
       <AiCanvasBoard strokes={strokes} />
