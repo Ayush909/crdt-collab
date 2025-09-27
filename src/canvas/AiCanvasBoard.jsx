@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { awareness } from "../yjssetup";
 
-export default function AiCanvasBoard({ strokes }) {
-  // User info (random name/color for demo)
-  const userName = useRef("User-" + Math.floor(Math.random() * 1000));
-  const userColor = useRef(
-    `#${Math.floor(Math.random() * 16777215).toString(16)}`
-  );
+export default function AiCanvasBoard({ strokes, userName }) {
+  // User info (userName from prop, color from palette)
+  const COLOR_PALETTE = [
+    "#e57373", "#f06292", "#ba68c8", "#64b5f6", "#4dd0e1", "#81c784",
+    "#ffd54f", "#ffb74d", "#a1887f", "#90a4ae", "#000000", "#ffffff"
+  ];
+  const [userColor, setUserColor] = useState(COLOR_PALETTE[0]);
   const canvasRef = useRef(null);
   const [localStrokes, setLocalStrokes] = useState([]);
   const [remoteCursors, setRemoteCursors] = useState([]);
@@ -15,7 +16,6 @@ export default function AiCanvasBoard({ strokes }) {
   // Listen to CRDT updates
   useEffect(() => {
     const updateHandler = () => {
-      console.log("updateHandler called");
       setLocalStrokes(strokes.toArray());
     };
     strokes.observe(updateHandler);
@@ -54,7 +54,6 @@ export default function AiCanvasBoard({ strokes }) {
     // Redraw strokes first
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     localStrokes.forEach((stroke) => {
-      console.log("stroke: ", stroke);
       ctx.strokeStyle = stroke.color;
       ctx.beginPath();
       ctx.moveTo(stroke.x1, stroke.y1);
@@ -85,7 +84,7 @@ export default function AiCanvasBoard({ strokes }) {
     const x2 = x1 + 1; // start tiny
     const y2 = y1 + 1;
     strokes.push([
-      { x1, y1, x2, y2, author: userName.current, color: userColor.current },
+  { x1, y1, x2, y2, author: userName, color: userColor },
     ]);
   };
 
@@ -96,35 +95,47 @@ export default function AiCanvasBoard({ strokes }) {
     const y = e.clientY - rect.top;
 
     // Broadcast local cursor position
-    awareness.setLocalStateField("cursor", { x, y });
-    awareness.setLocalStateField("name", userName.current);
-    awareness.setLocalStateField("color", userColor.current);
+  awareness.setLocalStateField("cursor", { x, y });
+  awareness.setLocalStateField("name", userName);
+  awareness.setLocalStateField("color", userColor);
 
     // for continuous drawing
     if (e.buttons !== 1) return; // left click
     const x2 = x;
     const y2 = y;
     const last = strokes.get(strokes.length - 1);
-    if (last && last.author === userName.current) {
+    if (last && last.author === userName) {
       strokes.push([
         {
           x1: last.x2,
           y1: last.y2,
           x2,
           y2,
-          author: userName.current,
-          color: userColor.current,
+          author: userName,
+          color: userColor,
         },
       ]);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="mb-4 flex flex-row items-center space-x-2">
+        <span className="font-semibold">Pick your color:</span>
+        {COLOR_PALETTE.map((color) => (
+          <button
+            key={color}
+            className={`w-7 h-7 rounded-full border-2 ${userColor === color ? 'border-black' : 'border-gray-300'}`}
+            style={{ background: color }}
+            onClick={() => setUserColor(color)}
+            aria-label={`Pick color ${color}`}
+          />
+        ))}
+      </div>
       <div className="relative flex flex-row items-center justify-center w-full">
         <canvas
           ref={canvasRef}
-          width={800}
+          width={1000}
           height={600}
           className="border border-gray-400 bg-white shadow-md rounded-lg"
           onMouseDown={handleMouseDown}
