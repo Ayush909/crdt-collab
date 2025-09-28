@@ -26,23 +26,25 @@ function App() {
 
   if (!username) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded shadow-md flex flex-col items-center">
-          <h2 className="text-xl font-bold mb-4">Enter your username</h2>
+      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-purple-100">
+        <div className="bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center min-w-[320px] w-full max-w-xs">
+          <h2 className="text-2xl font-extrabold mb-6 text-gray-800 tracking-tight">Enter your username</h2>
           <input
-            className="border px-3 py-2 rounded mb-4"
+            className="border border-gray-300 px-4 py-2 rounded-lg mb-5 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-base"
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Username"
             maxLength={20}
             autoFocus
+            onKeyDown={e => { if (e.key === 'Enter' && input.trim()) setUsername(input.trim()); }}
           />
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-blue-500 hover:bg-blue-600 transition-colors text-white px-6 py-2 rounded-lg font-semibold shadow-md w-full disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => {
               if (input.trim()) setUsername(input.trim());
             }}
+            disabled={!input.trim()}
           >
             Join
           </button>
