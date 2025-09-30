@@ -4,7 +4,7 @@ import { WebrtcProvider } from "y-webrtc";
 const ydoc = new y.Doc();
 // wss:// means "WebSocket Secure" (WebSocket over HTTPS/TLS)
 export const provider = new WebrtcProvider("drawing-room", ydoc, {
-  signaling: ["ws://signally-server.vercel.app/"],
+  signaling: ["wss://signally-server.vercel.app/"],
 });
 export const strokes = ydoc.getArray("strokes");
 export const awareness = provider.awareness;
