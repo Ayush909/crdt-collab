@@ -3,11 +3,9 @@ import { WebrtcProvider } from "y-webrtc";
 
 const ydoc = new y.Doc();
 // wss:// means "WebSocket Secure" (WebSocket over HTTPS/TLS)
-export const provider = new WebrtcProvider("drawing-room", ydoc, {signaling : ["ws://localhost:4444/"], iceServers: [{urls: "stun:stun.l.google.com:19302"},  { 
-      urls: "turn:your-turn-server.com:3478",
-      username: "testuser",
-      credential: "testpass"
-    }]});
+export const provider = new WebrtcProvider("drawing-room", ydoc, {
+  signaling: ["ws://signally-server.vercel.app/"],
+});
 export const strokes = ydoc.getArray("strokes");
 export const awareness = provider.awareness;
 
@@ -33,6 +31,6 @@ Restart Chrome.
 
 */
 
-provider.on('peers', (peers) => {
-  console.log('Connected peers:', peers);
+provider.on("peers", (peers) => {
+  console.log("Connected peers:", peers);
 });

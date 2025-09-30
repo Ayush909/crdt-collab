@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { awareness } from "../yjssetup";
 
-export default function AiCanvasBoard({ strokes, userName }) {
+export default function AICanvasBoard({ strokes, userName }) {
   // User info (userName from prop, color from palette)
   const COLOR_PALETTE = [
     "#e57373", "#f06292", "#ba68c8", "#64b5f6", "#4dd0e1", "#81c784",
