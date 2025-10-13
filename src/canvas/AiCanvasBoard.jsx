@@ -4,8 +4,18 @@ import { awareness } from "../yjssetup";
 export default function AICanvasBoard({ strokes, userName }) {
   // User info (userName from prop, color from palette)
   const COLOR_PALETTE = [
-    "#e57373", "#f06292", "#ba68c8", "#64b5f6", "#4dd0e1", "#81c784",
-    "#ffd54f", "#ffb74d", "#a1887f", "#90a4ae", "#000000", "#ffffff"
+    "#e57373",
+    "#f06292",
+    "#ba68c8",
+    "#64b5f6",
+    "#4dd0e1",
+    "#81c784",
+    "#ffd54f",
+    "#ffb74d",
+    "#a1887f",
+    "#90a4ae",
+    "#000000",
+    "#ffffff",
   ];
   const [userColor, setUserColor] = useState(COLOR_PALETTE[0]);
   const canvasRef = useRef(null);
@@ -25,25 +35,35 @@ export default function AICanvasBoard({ strokes, userName }) {
 
   // Awareness: listen for remote cursors and user presence
   useEffect(() => {
-    const awarenessHandler = () => {
-      // console.log("awareness: ", awareness);
-      const states = Array.from(awareness.getStates().entries());
-      const cursors = states
-        .filter(([, state]) => state.cursor && state.name && state.color)
-        .map(([, state]) => ({
-          x: state.cursor.x,
-          y: state.cursor.y,
-          name: state.name,
-          color: state.color,
-        }));
-      setRemoteCursors(cursors);
-      setOnlineUsers(
-        states.map(([, state]) => ({ name: state.name, color: state.color }))
-      );
+    let resolvedAwareness;
+
+    const setupAwarenessHandler = async () => {
+      resolvedAwareness = await awareness; // Resolve the awareness Promise
+
+      const awarenessHandler = () => {
+        const states = Array.from(resolvedAwareness.getStates().entries());
+        const cursors = states
+          .filter(([, state]) => state.cursor && state.name && state.color)
+          .map(([, state]) => ({
+            x: state.cursor.x,
+            y: state.cursor.y,
+            name: state.name,
+            color: state.color,
+          }));
+        setRemoteCursors(cursors);
+        setOnlineUsers(
+          states.map(([, state]) => ({ name: state.name, color: state.color }))
+        );
+      };
+
+      resolvedAwareness.on("change", awarenessHandler);
+      awarenessHandler(); // Initial call
+
+      return () => resolvedAwareness.off("change", awarenessHandler); // Cleanup
     };
-    awareness.on("change", awarenessHandler);
-    awarenessHandler();
-    return () => awareness.off("change", awarenessHandler);
+
+    const cleanup = setupAwarenessHandler(); // Call the setup function
+    return () => cleanup && cleanup(); // Cleanup on unmount
   }, []);
 
   // Draw remote cursors on top of canvas (no trail)
@@ -83,24 +103,25 @@ export default function AICanvasBoard({ strokes, userName }) {
     const y1 = e.clientY - rect.top;
     const x2 = x1 + 1; // start tiny
     const y2 = y1 + 1;
-    strokes.push([
-  { x1, y1, x2, y2, author: userName, color: userColor },
-    ]);
+    strokes.push([{ x1, y1, x2, y2, author: userName, color: userColor }]);
   };
 
-  const handleMouseMove = (e) => {
-    // get mouse position
+  const handleMouseMove = async (e) => {
+    // Resolve the awareness Promise
+    const resolvedAwareness = await awareness;
+
+    // Get mouse position
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     // Broadcast local cursor position
-  awareness.setLocalStateField("cursor", { x, y });
-  awareness.setLocalStateField("name", userName);
-  awareness.setLocalStateField("color", userColor);
+    resolvedAwareness.setLocalStateField("cursor", { x, y });
+    resolvedAwareness.setLocalStateField("name", userName);
+    resolvedAwareness.setLocalStateField("color", userColor);
 
-    // for continuous drawing
-    if (e.buttons !== 1) return; // left click
+    // For continuous drawing
+    if (e.buttons !== 1) return; // Left click
     const x2 = x;
     const y2 = y;
     const last = strokes.get(strokes.length - 1);
@@ -125,7 +146,9 @@ export default function AICanvasBoard({ strokes, userName }) {
         {COLOR_PALETTE.map((color) => (
           <button
             key={color}
-            className={`w-7 h-7 rounded-full border-2 ${userColor === color ? 'border-black' : 'border-gray-300'}`}
+            className={`w-7 h-7 rounded-full border-2 ${
+              userColor === color ? "border-black" : "border-gray-300"
+            }`}
             style={{ background: color }}
             onClick={() => setUserColor(color)}
             aria-label={`Pick color ${color}`}

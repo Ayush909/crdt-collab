@@ -2,13 +2,38 @@ import * as y from "yjs";
 import { WebrtcProvider } from "y-webrtc";
 
 const ydoc = new y.Doc();
-// wss:// means "WebSocket Secure" (WebSocket over HTTPS/TLS)
-export const provider = new WebrtcProvider("drawing-room", ydoc, {
-  signaling: ["wss://signally-server.onrender.com/"],
-});
-export const strokes = ydoc.getArray("strokes");
-export const awareness = provider.awareness;
 
+export const getTurnServerDetails = async () => {
+  const res = await fetch("https://signally-server.onrender.com/turn");
+  const { iceServers } = await res.json();
+  return iceServers;
+};
+
+const initializeProvider = async () => {
+  const iceServers = await getTurnServerDetails();
+  const provider = new WebrtcProvider("drawing-room", ydoc, {
+    signaling: ["wss://signally-server.onrender.com/"], // wss:// means "WebSocket Secure" (WebSocket over HTTPS/TLS)
+    peerOpts: {
+      config: {
+        iceServers: [
+          ...iceServers, // Adding fetched TURN servers here
+        ],
+      },
+    },
+  });
+
+  provider.on("peers", (peers) => {
+    console.log("Connected peers:", peers);
+  });
+
+  return provider;
+};
+
+// wss:// means "WebSocket Secure" (WebSocket over HTTPS/TLS)
+export const strokes = ydoc.getArray("strokes");
+export const awareness = initializeProvider().then(
+  (provider) => provider.awareness
+);
 /*
 
 To Test in Incognito mode in Chrome:
@@ -30,7 +55,3 @@ Set to Disabled.
 Restart Chrome.
 
 */
-
-provider.on("peers", (peers) => {
-  console.log("Connected peers:", peers);
-});
